@@ -1,54 +1,77 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <title>植物大战僵尸 - 简化版</title>
-  <style>
-    #game-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 60px);
-      grid-template-rows: repeat(5, 60px);
-      gap: 2px;
-      margin: 20px auto;
-      width: fit-content;
-    }
-
-    .cell {
-      width: 60px;
-      height: 60px;
-      background-color: #c5e1a5;
-      border: 1px solid #999;
-      position: relative;
-    }
-
-    .cell.blocked {
-      background-color: #999;
-    }
-
-    .lawnmower {
-      width: 30px;
-      height: 30px;
-      background-color: red;
-      position: absolute;
-      left: 0;
-      top: 15px;
-      border-radius: 5px;
-    }
-
-    .zombie {
-      background-image: url('https://i.imgur.com/zGhtbKf.png');
-      background-size: cover;
-    }
-
-    @keyframes mowRight {
-      0% { left: 0; }
-      100% { left: 700px; }
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>植物大战僵尸 - 1400x600示例</title>
+<style>
+  body {
+    background: #222;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  #game-container {
+    width: 1400px;
+    height: 600px;
+    background-image: url("assets/bg/lawn_1400x600.png");
+    background-size: cover;
+    position: relative;
+    border: 2px solid #333;
+  }
+  #game-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 110px);
+    grid-template-rows: repeat(5, 110px);
+    gap: 2px;
+    position: absolute;
+    top: 0; left: 0;
+    width: 1324px; /* 110 * 12 + gaps */
+    height: 550px; /* 110 * 5 + gaps */
+    margin: 25px;
+  }
+  .cell {
+    width: 110px;
+    height: 110px;
+    background-color: #c5e1a5;
+    border: 1px solid #999;
+    position: relative;
+  }
+  .cell.blocked {
+    background-color: #999;
+    pointer-events: none;
+  }
+  .lawnmower {
+    width: 50px;
+    height: 50px;
+    background-color: red;
+    position: absolute;
+    left: 5px;
+    top: 30px;
+    border-radius: 8px;
+    z-index: 10;
+  }
+  .zombie {
+    background-image: url('https://i.imgur.com/zGhtbKf.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    width: 70px;
+    height: 90px;
+    position: absolute;
+    left: 20px;
+    top: 10px;
+    z-index: 20;
+  }
+  @keyframes mowRight {
+    0% { left: 5px; }
+    100% { left: 1200px; }
+  }
+</style>
 </head>
 <body>
-  <h2 style="text-align:center;">植物大战僵尸 - 自制简化版</h2>
-  <div id="game-grid"></div>
+  <div id="game-container">
+    <div id="game-grid"></div>
+  </div>
 
   <script>
     const rows = 5;
@@ -71,7 +94,6 @@
             mower.classList.add("lawnmower");
             cell.appendChild(mower);
           }
-
           if (c === 10) {
             cell.classList.add("blocked");
           }
@@ -90,74 +112,63 @@
         speed: 1
       };
       zombies.push(zombie);
-      renderZombie(zombie);
+      renderZombies();
     }
 
     function moveZombies() {
-  // 清除所有原先 zombie 样式
-  document.querySelectorAll(".cell").forEach(cell => cell.classList.remove("zombie"));
+      // 先清除所有僵尸DOM
+      document.querySelectorAll(".zombie").forEach(z => z.remove());
 
-  for (let i = zombies.length - 1; i >= 0; i--) {
-    const zombie = zombies[i];
-    zombie.col -= zombie.speed;
+      for (let i = zombies.length -1; i >=0; i--) {
+        let zombie = zombies[i];
+        zombie.col -= zombie.speed * 0.1; // 更细腻移动速度
 
-    // 如果僵尸接近第0列（小于等于1），触发小推车
-    if (zombie.col <= 1 && lawnmowers[zombie.row]) {
-      activateLawnmower(zombie.row);
-      zombies.splice(i, 1);
-      continue;
+        if (zombie.col <= 1 && lawnmowers[zombie.row]) {
+          activateLawnmower(zombie.row);
+          zombies.splice(i,1);
+          continue;
+        }
+        if (zombie.col < 0) {
+          alert("Game Over");
+          zombies.splice(i,1);
+          continue;
+        }
+      }
+
+      renderZombies();
     }
 
-    // 僵尸穿越最左边，Game Over
-    if (zombie.col < 0) {
-      alert("Game Over");
-      zombies.splice(i, 1);
-      continue;
+    function renderZombies() {
+      const grid = document.getElementById("game-grid");
+      zombies.forEach(zombie => {
+        const cell = document.querySelector(`.cell[data-row="${zombie.row}"][data-col="${Math.floor(zombie.col)}"]`);
+        if (cell) {
+          const zombieDiv = document.createElement("div");
+          zombieDiv.classList.add("zombie");
+          // 细化横向位置，模拟逐渐移动
+          zombieDiv.style.left = (20 + (zombie.col - Math.floor(zombie.col)) * 110) + "px";
+          zombieDiv.style.top = "10px";
+          cell.appendChild(zombieDiv);
+        }
+      });
     }
-
-    // 渲染僵尸位置
-    const cell = document.querySelector(`.cell[data-row='${zombie.row}'][data-col='${Math.floor(zombie.col)}']`);
-    if (cell) {
-      cell.classList.add("zombie");
-    }
-  }
-}
 
     function activateLawnmower(row) {
-  lawnmowers[row] = false;
-
-  const mowerCell = document.querySelector(`.cell[data-row="${row}"][data-col="0"]`);
-  const mower = mowerCell.querySelector(".lawnmower");
-  if (!mower) return;
-
-  let mowerCol = 0;
-
-  const interval = setInterval(() => {
-    mowerCol++;
-    const nextCell = document.querySelector(`.cell[data-row="${row}"][data-col="${mowerCol}"]`);
-    if (nextCell) {
-      nextCell.appendChild(mower); // 将 mower 视觉上移到下一格
-    }
-
-    // 击杀本列上的僵尸
-    for (let i = zombies.length - 1; i >= 0; i--) {
-      if (zombies[i].row === row && zombies[i].col === mowerCol) {
-        zombies.splice(i, 1);
+      lawnmowers[row] = false;
+      const mower = document.querySelector(`.cell[data-row="${row}"][data-col="0"] .lawnmower`);
+      if (mower) {
+        mower.style.animation = "mowRight 2s linear forwards";
+      }
+      // 清除该行所有僵尸
+      for (let i = zombies.length -1; i >=0; i--) {
+        if (zombies[i].row === row) zombies.splice(i,1);
       }
     }
 
-    // 停止
-    if (mowerCol >= 11) {
-      clearInterval(interval);
-      mower.remove();
-    }
-  }, 100); // 每100ms移动一格
-}
-
     document.addEventListener("DOMContentLoaded", () => {
       createGrid();
-      setInterval(spawnZombie, 5000);
-      setInterval(moveZombies, 1000);
+      setInterval(spawnZombie, 4000);
+      setInterval(moveZombies, 100);
     });
   </script>
 </body>
