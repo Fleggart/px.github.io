@@ -30,13 +30,13 @@
     height: 550px; /* 110 * 5 + gaps */
     margin: 25px;
   }
-  .cell {
-    width: 110px;
-    height: 110px;
-    background-color: #c5e1a5;
-    border: 1px solid #999;
-    position: relative;
-  }
+.cell {
+  width: 110px;
+  height: 110px;
+  border: none; /* 移除边框 */
+  background-color: transparent; /* 背景透明 */
+  position: relative;
+}
   .cell.blocked {
     background-color: #999;
     pointer-events: none;
