@@ -2,26 +2,29 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>网页版植物大战僵尸</title>
+  <title>植物大战僵尸网页版</title>
   <style>
     body {
       margin: 0;
-      overflow: hidden;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
     #game {
-      width: 1400px;
+      width: 960px;
       height: 600px;
-      background-image: url('lawn.png'); /* 替换为你的背景图路径 */
+      background-image: url('images/background.jpg'); /* 图片路径 */
       background-size: cover;
       position: relative;
-      margin: 0 auto;
-      border: 2px solid #333;
+      border: 2px solid #444;
     }
     .grid {
       position: absolute;
-      width: calc(1400px / 9);
+      width: calc(960px / 9);
       height: calc(600px / 5);
-      border: 1px dashed rgba(0,0,0,0.1);
+      border: 1px dashed rgba(0,0,0,0.15);
       box-sizing: border-box;
     }
     .plant {
@@ -36,12 +39,11 @@
       height: 100px;
       background: gray;
       position: absolute;
-      top: 0;
-      animation: walk 15s linear forwards;
+      animation: moveZombie 15s linear forwards;
     }
-    @keyframes walk {
+    @keyframes moveZombie {
       from { right: -80px; }
-      to { right: 1400px; }
+      to { right: 960px; }
     }
   </style>
 </head>
@@ -50,11 +52,9 @@
 
   <script>
     const game = document.getElementById('game');
-
-    // 创建网格（5行9列）
     const rows = 5;
     const cols = 9;
-    const cellWidth = 1400 / cols;
+    const cellWidth = 960 / cols;
     const cellHeight = 600 / rows;
 
     const gridMap = [];
@@ -63,7 +63,7 @@
       gridMap[r] = [];
       for (let c = 0; c < cols; c++) {
         const cell = document.createElement('div');
-        cell.classList.add('grid');
+        cell.className = 'grid';
         cell.style.left = `${c * cellWidth}px`;
         cell.style.top = `${r * cellHeight}px`;
         game.appendChild(cell);
@@ -71,7 +71,7 @@
       }
     }
 
-    // 放置植物
+    // 点击放置植物
     game.addEventListener('click', (e) => {
       const rect = game.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -79,12 +79,11 @@
       const col = Math.floor(x / cellWidth);
       const row = Math.floor(y / cellHeight);
 
-      // 判断是否已有植物
       if (gridMap[row][col].hasChildNodes()) return;
 
       const plant = document.createElement('div');
       plant.className = 'plant';
-      plant.style.left = `${col * cellWidth + 20}px`;
+      plant.style.left = `${col * cellWidth + 10}px`;
       plant.style.top = `${row * cellHeight + 10}px`;
       game.appendChild(plant);
     });
@@ -103,7 +102,7 @@
       });
     }
 
-    setInterval(spawnZombie, 5000); // 每5秒生成一个僵尸
+    setInterval(spawnZombie, 5000);
   </script>
 </body>
 </html>
