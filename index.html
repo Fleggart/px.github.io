@@ -2,11 +2,11 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>网页版植物大战僵尸</title>
+  <title>植物大战僵尸网页版</title>
   <style>
     body {
       margin: 0;
-      background: #111;
+      background: #000;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -15,37 +15,34 @@
     #game {
       width: 960px;
       height: 600px;
-      background-image: url('images/background.png'); /* 替换为实际路径 */
+      background-image: url('images/background.jpg'); /* 图片路径 */
       background-size: cover;
       position: relative;
       border: 2px solid #444;
     }
     .grid {
       position: absolute;
-      width: 70px;
-      height: 95px;
+      width: calc(960px / 9);
+      height: calc(600px / 5);
+      border: 1px dashed rgba(0,0,0,0.15);
       box-sizing: border-box;
-      border: 1px dashed rgba(0, 0, 0, 0.15);
-      pointer-events: none;
     }
     .plant {
-      width: 60px;
-      height: 60px;
+      width: 80px;
+      height: 80px;
       background: green;
       border-radius: 50%;
       position: absolute;
-      z-index: 2;
     }
     .zombie {
-      width: 60px;
-      height: 90px;
+      width: 80px;
+      height: 100px;
       background: gray;
       position: absolute;
-      z-index: 2;
       animation: moveZombie 15s linear forwards;
     }
     @keyframes moveZombie {
-      from { right: -60px; }
+      from { right: -80px; }
       to { right: 960px; }
     }
   </style>
@@ -55,24 +52,20 @@
 
   <script>
     const game = document.getElementById('game');
-
-    const startX = 80; // 草坪左上角 X
-    const startY = 80;  // 草坪左上角 Y
-    const cellW = 80;
-    const cellH = 100;
-    const cols = 10;
     const rows = 5;
+    const cols = 9;
+    const cellWidth = 960 / cols;
+    const cellHeight = 600 / rows;
 
     const gridMap = [];
 
-    // 生成网格（调试用，也用于定位）
     for (let r = 0; r < rows; r++) {
       gridMap[r] = [];
       for (let c = 0; c < cols; c++) {
         const cell = document.createElement('div');
         cell.className = 'grid';
-        cell.style.left = `${startX + c * cellW}px`;
-        cell.style.top = `${startY + r * cellH}px`;
+        cell.style.left = `${c * cellWidth}px`;
+        cell.style.top = `${r * cellHeight}px`;
         game.appendChild(cell);
         gridMap[r][c] = cell;
       }
@@ -83,17 +76,15 @@
       const rect = game.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
+      const col = Math.floor(x / cellWidth);
+      const row = Math.floor(y / cellHeight);
 
-      const col = Math.floor((x - startX) / cellW);
-      const row = Math.floor((y - startY) / cellH);
-
-      if (col < 0 || col >= cols || row < 0 || row >= rows) return;
       if (gridMap[row][col].hasChildNodes()) return;
 
       const plant = document.createElement('div');
       plant.className = 'plant';
-      plant.style.left = `${startX + col * cellW + 5}px`;
-      plant.style.top = `${startY + row * cellH + 15}px`;
+      plant.style.left = `${col * cellWidth + 10}px`;
+      plant.style.top = `${row * cellHeight + 10}px`;
       game.appendChild(plant);
     });
 
@@ -101,9 +92,9 @@
     function spawnZombie() {
       const zombie = document.createElement('div');
       zombie.className = 'zombie';
-      const row = Math.floor(Math.random() * rows);
-      zombie.style.top = `${startY + row * cellH + 5}px`;
-      zombie.style.right = '-60px';
+      const row = Math.floor(Math.random() * 5);
+      zombie.style.top = `${row * cellHeight}px`;
+      zombie.style.right = '-80px';
       game.appendChild(zombie);
 
       zombie.addEventListener('animationend', () => {
@@ -111,7 +102,6 @@
       });
     }
 
-    // 每5秒生成一个僵尸
     setInterval(spawnZombie, 5000);
   </script>
 </body>
