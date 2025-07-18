@@ -13,8 +13,8 @@
       height: 100vh;
     }
     #game {
-      width: 960px;
-      height: 600px;
+      width: 960px; /* 确保与背景图像宽度一致 */
+      height: 600px; /* 确保与背景图像高度一致 */
       background-image: url('images/background.png'); /* 替换为实际路径 */
       background-size: cover;
       position: relative;
@@ -22,8 +22,8 @@
     }
     .grid {
       position: absolute;
-      width: 70px;
-      height: 95px;
+      width: 80px; /* 根据背景图格子的实际大小 */
+      height: 100px; /* 根据背景图格子的实际大小 */
       box-sizing: border-box;
       border: 1px dashed rgba(0, 0, 0, 0.15);
       pointer-events: none;
@@ -55,17 +55,17 @@
 
   <script>
     const game = document.getElementById('game');
-
-    const startX = 80; // 草坪左上角 X
-    const startY = 80;  // 草坪左上角 Y
-    const cellW = 80;
-    const cellH = 100;
+    
+    const startX = 80; // 根据背景图调整
+    const startY = 80; // 根据背景图调整
+    const cellW = 80;  // 根据背景图调整
+    const cellH = 100; // 根据背景图调整
     const cols = 10;
     const rows = 5;
 
     const gridMap = [];
 
-    // 生成网格（调试用，也用于定位）
+    // 生成网格
     for (let r = 0; r < rows; r++) {
       gridMap[r] = [];
       for (let c = 0; c < cols; c++) {
