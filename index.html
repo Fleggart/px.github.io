@@ -1,118 +1,210 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>网页版植物大战僵尸</title>
-  <style>
-    body {
-      margin: 0;
-      background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    #game {
-      width: 960px; /* 确保与背景图像宽度一致 */
-      height: 600px; /* 确保与背景图像高度一致 */
-      background-image: url('images/background.png'); /* 替换为实际路径 */
-      background-size: cover;
-      position: relative;
-      border: 2px solid #444;
-    }
-    .grid {
-      position: absolute;
-      width: 80px; /* 根据背景图格子的实际大小 */
-      height: 100px; /* 根据背景图格子的实际大小 */
-      box-sizing: border-box;
-      border: 1px dashed rgba(0, 0, 0, 0.15);
-      pointer-events: none;
-    }
-    .plant {
-      width: 60px;
-      height: 60px;
-      background: green;
-      border-radius: 50%;
-      position: absolute;
-      z-index: 2;
-    }
-    .zombie {
-      width: 60px;
-      height: 90px;
-      background: gray;
-      position: absolute;
-      z-index: 2;
-      animation: moveZombie 15s linear forwards;
-    }
-    @keyframes moveZombie {
-      from { right: -60px; }
-      to { right: 960px; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>名字男娘指数解析器</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎭</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pinyin@4.0.0/lib/umd/pinyin.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .rainbow-text {
+            background: linear-gradient(90deg, #ef4444, #f97316, #eab308, #84cc16, #22c55e, #14b8a6, #06b6d4, #3b82f6, #8b5cf6, #d946ef);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .progress-bar-inner {
+            transition: width 0.2s linear, background-color 0.2s linear;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.5s; }
+        @keyframes pop-in {
+            0% { transform: scale(0.8); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .pop-in { animation: pop-in 0.5s ease-out forwards; }
+    </style>
 </head>
-<body>
-  <div id="game"></div>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md mx-auto bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold rainbow-text">名字男娘指数解析器</h1>
+            <p class="text-gray-400 mt-2">输入一个名字，看看“科学”的男娘指数！</p>
+            <p class="text-xs text-gray-500 mt-1">（纯属娱乐，请勿当真）</p>
+        </div>
+        <!-- Input Form -->
+        <div class="space-y-4">
+            <input type="text" id="nameInput" placeholder="输入名字或网名" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500">
+            <button id="calculateBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition transform hover:scale-105 active:scale-95">
+                <span id="btnText">开始计算</span>
+                <span id="btnSpinner" class="hidden animate-spin">◐</span>
+            </button>
+        </div>
+        <!-- Result -->
+        <div id="resultSection" class="hidden pt-6 space-y-4 text-center">
+            <h2 class="text-xl font-semibold text-gray-300">计算结果 for "<span id="resultName" class="font-bold text-purple-400"></span>"</h2>
+            <div class="relative w-full h-8 bg-gray-700 rounded-full overflow-hidden border-2 border-gray-600">
+                <div id="progressBar" class="progress-bar-inner h-full rounded-full" style="width: 0%; background-color:#3b82f6;"></div>
+                <span id="percentageText" class="absolute inset-0 flex items-center justify-center text-sm font-bold text-white opacity-0">0%</span>
+            </div>
+            <p id="resultMessage" class="text-lg font-medium text-gray-200 h-12 flex items-center justify-center"></p>
+        </div>
+    </div>
+    <script>
+        window.onload = function() {
+            const nameInput = document.getElementById('nameInput');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
+            const resultSection = document.getElementById('resultSection');
+            const resultName = document.getElementById('resultName');
+            const progressBar = document.getElementById('progressBar');
+            const percentageText = document.getElementById('percentageText');
+            const resultMessage = document.getElementById('resultMessage');
 
-  <script>
-    const game = document.getElementById('game');
-    
-    const startX = 80; // 根据背景图调整
-    const startY = 80; // 根据背景图调整
-    const cellW = 80;  // 根据背景图调整
-    const cellH = 100; // 根据背景图调整
-    const cols = 10;
-    const rows = 5;
+            // 将名字标准化为小写拼音，去除所有非字母数字字符
+            function normalizeName(name) {
+                let processed = name.trim().toLowerCase();
+                // 如果包含中文字符，转换为拼音
+                if (/[一-龥]/.test(processed)) {
+                    processed = pinyin.pinyin(processed, { style: pinyin.STYLE_NORMAL }).flat().join('');
+                }
+                return processed.replace(/[^a-z0-9]/g, '');
+            }
 
-    const gridMap = [];
+            // 升级后的复杂计算逻辑
+            function calculateScore(name) {
+                // 如果名字为空，直接返回 0
+                if (!name) return 0;
 
-    // 生成网格
-    for (let r = 0; r < rows; r++) {
-      gridMap[r] = [];
-      for (let c = 0; c < cols; c++) {
-        const cell = document.createElement('div');
-        cell.className = 'grid';
-        cell.style.left = `${startX + c * cellW}px`;
-        cell.style.top = `${startY + r * cellH}px`;
-        game.appendChild(cell);
-        gridMap[r][c] = cell;
-      }
-    }
+                // 定义一些"伪科学"的字母权重
+                const femboyLetters = { 'a': 10, 'i': 9, 'e': 8, 'o': 7, 'u': 6, 'y': 5, 'l': 4, 'm': 3 };
+                const masculineLetters = { 'b': 10, 'k': 9, 'g': 8, 'd': 7, 'p': 6, 'z': 5, 'c': 4, 't': 3 };
+                const baseScore = 50; // 基础分，从50开始
 
-    // 点击放置植物
-    game.addEventListener('click', (e) => {
-      const rect = game.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+                let totalScore = baseScore;
+                let lengthBonus = name.length > 5 ? (name.length - 5) * 2 : 0; // 名字越长，加分越多
+                let positionFactor = 0; // 位置加权分
 
-      const col = Math.floor((x - startX) / cellW);
-      const row = Math.floor((y - startY) / cellH);
+                // 遍历名字中的每个字符
+                for (let i = 0; i < name.length; i++) {
+                    const char = name[i];
+                    // 字母ASCII码的奇偶性也会影响结果
+                    const charCode = char.charCodeAt(0);
 
-      if (col < 0 || col >= cols || row < 0 || row >= rows) return;
-      if (gridMap[row][col].hasChildNodes()) return;
+                    // 根据预设权重增加或减少分数
+                    if (femboyLetters[char]) {
+                        totalScore += femboyLetters[char] * (i + 1); // 越靠前权重越大
+                    } else if (masculineLetters[char]) {
+                        totalScore -= masculineLetters[char] * (i + 1); // 越靠前权重越大
+                    }
 
-      const plant = document.createElement('div');
-      plant.className = 'plant';
-      plant.style.left = `${startX + col * cellW + 5}px`;
-      plant.style.top = `${startY + row * cellH + 15}px`;
-      game.appendChild(plant);
-    });
+                    // 奇偶位置的神秘加成
+                    if (i % 2 === 0) {
+                        positionFactor += 3;
+                    } else {
+                        positionFactor += 2;
+                    }
 
-    // 生成僵尸
-    function spawnZombie() {
-      const zombie = document.createElement('div');
-      zombie.className = 'zombie';
-      const row = Math.floor(Math.random() * rows);
-      zombie.style.top = `${startY + row * cellH + 5}px`;
-      zombie.style.right = '-60px';
-      game.appendChild(zombie);
+                    // 奇偶ASCII码的玄学加成
+                    if (charCode % 2 === 0) {
+                        totalScore += 5;
+                    } else {
+                        totalScore -= 5;
+                    }
+                }
 
-      zombie.addEventListener('animationend', () => {
-        zombie.remove();
-      });
-    }
+                // 综合所有因素得到最终分数，并进行归一化到 0-100 范围
+                const finalScore = (totalScore + lengthBonus + positionFactor) % 101;
+                return Math.max(0, Math.min(100, finalScore));
+            }
 
-    // 每5秒生成一个僵尸
-    setInterval(spawnZombie, 5000);
-  </script>
+            // 根据分数返回不同的结果信息
+            function getResultMessage(score) {
+                const messages = {
+                    0: ["完全没有男娘气质，纯爷们无疑！"],
+                    10: ["有点可爱直男的感觉，但离男娘还远。"],
+                    40: ["开始显露中性风格，稍微有点男娘味。"],
+                    60: ["很有潜质！化个妆就能骗过不少人。"],
+                    75: ["走在路上都可能被当妹子！男娘力爆发！"],
+                    90: ["职业男娘级别，气质拿捏得死死的。"],
+                    100: ["完美男娘！你就是伪娘界的天花板！"]
+                };
+                if (score === 0) return messages[0][0];
+                if (score <= 10) return messages[10][0];
+                if (score <= 40) return messages[40][0];
+                if (score <= 60) return messages[60][0];
+                if (score <= 75) return messages[75][0];
+                if (score <= 90) return messages[90][0];
+                return messages[100][0];
+            }
+
+            // 根据百分比设置进度条颜色
+            function getProgressBarColor(percentage) {
+                if (percentage < 25) return '#3b82f6'; // blue
+                if (percentage < 50) return '#8b5cf6'; // purple
+                if (percentage < 75) return '#ec4899'; // pink
+                if (percentage < 90) return '#f59e0b'; // amber
+                return '#ef4444'; // red
+            }
+
+            // 处理计算按钮点击
+            function handleCalculation() {
+                const name = nameInput.value;
+                if (!name.trim()) {
+                    nameInput.classList.add('shake');
+                    setTimeout(() => nameInput.classList.remove('shake'), 500);
+                    return;
+                }
+                btnText.classList.add('hidden');
+                btnSpinner.classList.remove('hidden');
+                calculateBtn.disabled = true;
+                resultSection.classList.add('hidden');
+
+                // 模拟计算延迟
+                setTimeout(() => {
+                    const norm = normalizeName(name);
+                    const score = calculateScore(norm);
+                    displayResult(name, score);
+                    btnText.classList.remove('hidden');
+                    btnSpinner.classList.add('hidden');
+                    calculateBtn.disabled = false;
+                }, 800);
+            }
+
+            // 显示计算结果
+            function displayResult(name, score) {
+                resultName.textContent = name;
+                resultSection.classList.remove('hidden');
+                let current = 0;
+                const interval = setInterval(() => {
+                    progressBar.style.width = current + '%';
+                    progressBar.style.backgroundColor = getProgressBarColor(current);
+                    percentageText.textContent = current + '%';
+                    percentageText.style.opacity = 1;
+                    if (current >= score) {
+                        clearInterval(interval);
+                        percentageText.classList.add('pop-in');
+                        resultMessage.textContent = getResultMessage(score);
+                    } else {
+                        current++;
+                    }
+                }, 20);
+            }
+
+            // 绑定事件监听器
+            calculateBtn.addEventListener('click', handleCalculation);
+            nameInput.addEventListener('keyup', e => { if (e.key === 'Enter') handleCalculation(); });
+        }
+    </script>
 </body>
 </html>
